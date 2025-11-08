@@ -32,6 +32,7 @@ export interface GammaMarket {
   description?: string;
   outcomes?: string[];
   outcome_prices?: string[];
+  outcomePrices?: string[]; // camelCase variant
   volume?: string;
   active?: boolean;
   market_type?: string;
@@ -68,12 +69,15 @@ export interface GammaMarket {
   enable_order_book?: boolean;
   notification_type?: string;
   uma_reward?: string;
+  uma_resolution_statuses?: string[];
+  umaResolutionStatuses?: string[]; // camelCase variant
   question_title?: string;
   enable_ask?: boolean;
   notifications?: number[];
   events?: Event[];
   markets?: GammaMarket[];
   clob_token_ids?: string[];
+  clobTokenIds?: string[]; // camelCase variant
   clobRewards?: ClobReward[];
   tags?: Tag[];
   cyom?: boolean;

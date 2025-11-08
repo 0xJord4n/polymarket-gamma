@@ -521,6 +521,26 @@ describe('PolymarketGammaClient', () => {
       expect(markets[1].clob_token_ids).toEqual(['456']);
     });
 
+    it('should parse camelCase JSON string fields', async () => {
+      const mockMarket = {
+        id: '1',
+        outcomePrices: '["0.5", "0.5"]',
+        clobTokenIds: '["123456", "789012"]',
+        umaResolutionStatuses: '["proposed", "resolved"]',
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMarket,
+      });
+
+      const market = await client.getMarket('test');
+
+      expect(market.outcomePrices).toEqual(['0.5', '0.5']);
+      expect(market.clobTokenIds).toEqual(['123456', '789012']);
+      expect(market.umaResolutionStatuses).toEqual(['proposed', 'resolved']);
+    });
+
     it('should include proper headers', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

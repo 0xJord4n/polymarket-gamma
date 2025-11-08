@@ -56,7 +56,16 @@ export class PolymarketGammaClient {
     }
 
     const parsed: Record<string, unknown> = {};
-    const jsonStringFields = ['outcomes', 'outcome_prices', 'clob_token_ids'];
+    // API uses both camelCase and snake_case
+    const jsonStringFields = [
+      'outcomes',
+      'outcome_prices',
+      'outcomePrices',
+      'clob_token_ids',
+      'clobTokenIds',
+      'uma_resolution_statuses',
+      'umaResolutionStatuses',
+    ];
 
     for (const [key, value] of Object.entries(data)) {
       if (jsonStringFields.includes(key) && typeof value === 'string' && value.startsWith('[')) {
