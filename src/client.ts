@@ -44,6 +44,38 @@ export class PolymarketGammaClient {
   }
 
   /**
+   * Parse JSON string fields that the API returns as strings instead of arrays/objects
+   */
+  private parseJsonFields(data: unknown): unknown {
+    if (!data || typeof data !== 'object') {
+      return data;
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((item) => this.parseJsonFields(item));
+    }
+
+    const parsed: Record<string, unknown> = {};
+    const jsonStringFields = ['outcomes', 'outcome_prices', 'clob_token_ids'];
+
+    for (const [key, value] of Object.entries(data)) {
+      if (jsonStringFields.includes(key) && typeof value === 'string' && value.startsWith('[')) {
+        try {
+          parsed[key] = JSON.parse(value);
+        } catch {
+          parsed[key] = value;
+        }
+      } else if (value && typeof value === 'object') {
+        parsed[key] = this.parseJsonFields(value);
+      } else {
+        parsed[key] = value;
+      }
+    }
+
+    return parsed;
+  }
+
+  /**
    * Internal method to make HTTP requests
    */
   private async request<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
@@ -80,7 +112,8 @@ export class PolymarketGammaClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return (await response.json()) as T;
+      const data = await response.json();
+      return this.parseJsonFields(data) as T;
     } finally {
       clearTimeout(timeoutId);
     }
