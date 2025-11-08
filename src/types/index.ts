@@ -30,8 +30,8 @@ export interface GammaMarket {
   lower_bound?: string;
   upper_bound?: string;
   description?: string;
-  outcomes?: string;
-  outcome_prices?: number[] | string;
+  outcomes?: string[];
+  outcome_prices?: string[];
   volume?: string;
   active?: boolean;
   market_type?: string;
