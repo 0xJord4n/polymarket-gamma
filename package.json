@@ -1,0 +1,65 @@
+{
+  "name": "polymarket-gamma",
+  "version": "0.1.0",
+  "author": "0xjordan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xjord4n/polymarket-gamma"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.4",
+    "@types/bun": "latest",
+    "@vitest/ui": "^4.0.8",
+    "happy-dom": "^20.0.10",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/0xjord4n/polymarket-gamma/issues"
+  },
+  "description": "TypeScript client for Polymarket Gamma API - access prediction markets, events, and related data",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/0xjord4n/polymarket-gamma#readme",
+  "keywords": [
+    "polymarket",
+    "gamma",
+    "prediction-markets",
+    "api-client",
+    "typescript",
+    "rest-api",
+    "sports-betting",
+    "markets"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "check": "biome check . && tsc --noEmit",
+    "prepublishOnly": "npm run check && npm run test && npm run build"
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts"
+}
