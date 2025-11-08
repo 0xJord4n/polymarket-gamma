@@ -473,6 +473,54 @@ describe('PolymarketGammaClient', () => {
   });
 
   describe('request handling', () => {
+    it('should parse JSON string fields automatically', async () => {
+      const mockMarket: GammaMarket = {
+        id: '1',
+        question: 'Test market',
+        outcomes: '["Yes", "No"]' as unknown as string[],
+        outcome_prices: '["0.5", "0.5"]' as unknown as string[],
+        clob_token_ids: '["123", "456"]' as unknown as string[],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMarket,
+      });
+
+      const market = await client.getMarket('test');
+
+      expect(market.outcomes).toEqual(['Yes', 'No']);
+      expect(market.outcome_prices).toEqual(['0.5', '0.5']);
+      expect(market.clob_token_ids).toEqual(['123', '456']);
+    });
+
+    it('should parse JSON string fields in arrays', async () => {
+      const mockMarkets = [
+        {
+          id: '1',
+          outcomes: '["Yes", "No"]',
+          clob_token_ids: '["123"]',
+        },
+        {
+          id: '2',
+          outcomes: '["A", "B", "C"]',
+          clob_token_ids: '["456"]',
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMarkets,
+      });
+
+      const markets = await client.getMarkets();
+
+      expect(markets[0].outcomes).toEqual(['Yes', 'No']);
+      expect(markets[0].clob_token_ids).toEqual(['123']);
+      expect(markets[1].outcomes).toEqual(['A', 'B', 'C']);
+      expect(markets[1].clob_token_ids).toEqual(['456']);
+    });
+
     it('should include proper headers', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
