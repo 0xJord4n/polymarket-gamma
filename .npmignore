@@ -1,0 +1,17 @@
+# Source files
+src/
+examples/
+
+# Config files
+tsconfig.json
+tsconfig.build.json
+biome.json
+bun.lock
+
+# Development
+.claude/
+node_modules/
+
+# Git
+.git/
+.gitignore
