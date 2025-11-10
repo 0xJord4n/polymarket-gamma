@@ -26,6 +26,8 @@ import type {
 export interface GammaClientConfig {
   baseUrl?: string;
   timeout?: number;
+  fetch?: typeof fetch;
+  headers?: Record<string, string>;
 }
 
 /**
@@ -35,6 +37,8 @@ export interface GammaClientConfig {
 export class PolymarketGammaClient {
   private readonly baseUrl: string;
   private readonly timeout: number;
+  private readonly fetchFn: typeof fetch;
+  private readonly customHeaders: Record<string, string>;
 
   /**
    * Creates a new Polymarket Gamma API client
@@ -43,6 +47,8 @@ export class PolymarketGammaClient {
   constructor(config: GammaClientConfig = {}) {
     this.baseUrl = config.baseUrl ?? 'https://gamma-api.polymarket.com';
     this.timeout = config.timeout ?? 30000;
+    this.fetchFn = config.fetch ?? globalThis.fetch;
+    this.customHeaders = config.headers ?? {};
   }
 
   /**
@@ -111,10 +117,11 @@ export class PolymarketGammaClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(url.toString(), {
+      const response = await this.fetchFn(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...this.customHeaders,
         },
         signal: controller.signal,
       });
@@ -138,10 +145,11 @@ export class PolymarketGammaClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await this.fetchFn(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...this.customHeaders,
         },
         body: JSON.stringify(body),
         signal: controller.signal,

@@ -27,6 +27,47 @@ describe('PolymarketGammaClient', () => {
       });
       expect(customClient).toBeInstanceOf(PolymarketGammaClient);
     });
+
+    it('should accept custom fetch implementation', async () => {
+      const customFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      const customClient = new PolymarketGammaClient({
+        fetch: customFetch as unknown as typeof fetch,
+      });
+
+      await customClient.getMarkets();
+
+      expect(customFetch).toHaveBeenCalled();
+    });
+
+    it('should include custom headers in requests', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+
+      const customClient = new PolymarketGammaClient({
+        headers: {
+          'X-API-Key': 'test-key',
+          'X-Custom': 'value',
+        },
+      });
+
+      await customClient.getMarkets();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-API-Key': 'test-key',
+            'X-Custom': 'value',
+          }),
+        }),
+      );
+    });
   });
 
   describe('search', () => {

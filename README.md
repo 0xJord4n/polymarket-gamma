@@ -7,7 +7,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/0xjord4n/polymarket-gamma.svg)](https://github.com/0xjord4n/polymarket-gamma/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/0xjord4n/polymarket-gamma.svg)](https://github.com/0xjord4n/polymarket-gamma/issues)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/polymarket-gamma)](https://bundlephobia.com/package/polymarket-gamma)
-[![Tests](https://img.shields.io/badge/tests-35%20passing-brightgreen.svg)](https://github.com/0xjord4n/polymarket-gamma)
+[![Tests](https://img.shields.io/badge/tests-37%20passing-brightgreen.svg)](https://github.com/0xjord4n/polymarket-gamma)
 
 A clean, type-safe TypeScript client for the Polymarket Gamma API. Access prediction markets, events, tags, and related data with full TypeScript support.
 
@@ -17,7 +17,8 @@ A clean, type-safe TypeScript client for the Polymarket Gamma API. Access predic
 - 🚀 **Simple API** - Intuitive methods for accessing all Gamma API endpoints
 - 📦 **Zero Config** - Works out of the box with sensible defaults
 - 🔄 **Modern** - Built with modern JavaScript features (ESM, async/await)
-- 🧪 **Well-Tested** - Comprehensive test suite with 35 passing tests
+- 🧪 **Well-Tested** - Comprehensive test suite with 37 passing tests
+- 🔧 **Customizable** - Custom fetch, headers, retries, caching, and more
 - 🎨 **Clean Code** - Linted with BiomeJS for consistent code quality
 - ✨ **Auto-Parsing** - Automatically parses JSON string fields (outcomes, prices, token IDs)
 
@@ -66,10 +67,37 @@ const results = await client.search({ query: 'election', limit: 5 });
 
 ```typescript
 const client = new PolymarketGammaClient({
-  baseUrl: 'https://gamma-api.polymarket.com', // optional
+  baseUrl: 'https://gamma-api.polymarket.com', // optional, default shown
   timeout: 30000, // optional, in milliseconds
+  headers: {
+    // optional, custom headers for all requests
+    'X-API-Key': 'your-key',
+    'User-Agent': 'MyApp/1.0',
+  },
+  fetch: customFetchFn, // optional, custom fetch implementation
 });
 ```
+
+**Customization Options:**
+- `baseUrl` - Override the API base URL
+- `timeout` - Request timeout in milliseconds (default: 30000)
+- `headers` - Custom headers added to all requests
+- `fetch` - Custom fetch implementation for logging, retries, caching, etc.
+
+**Custom Fetch Example:**
+```typescript
+// Add request logging
+const loggingFetch = async (url, init) => {
+  console.log(`Request: ${init?.method || 'GET'} ${url}`);
+  return fetch(url, init);
+};
+
+const client = new PolymarketGammaClient({
+  fetch: loggingFetch as typeof fetch,
+});
+```
+
+See [examples/custom-client.ts](./examples/custom-client.ts) for more advanced examples including retries, caching, and rate limiting.
 
 ### Markets
 
@@ -205,6 +233,7 @@ Check out the [examples directory](./examples) for more detailed usage examples:
 
 - [basic-usage.ts](./examples/basic-usage.ts) - Basic API usage
 - [advanced-usage.ts](./examples/advanced-usage.ts) - Advanced features and patterns
+- [custom-client.ts](./examples/custom-client.ts) - Custom fetch, headers, retries, caching
 
 ## Type Definitions
 
@@ -265,7 +294,7 @@ This package includes comprehensive unit tests using Vitest. Tests cover:
 - ✅ URL construction and query parameters
 - ✅ Automatic parsing of JSON string fields
 
-**Test Coverage:** 35 tests, all passing
+**Test Coverage:** 37 tests, all passing
 
 Run tests with:
 ```bash
