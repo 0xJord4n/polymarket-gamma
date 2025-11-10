@@ -7,8 +7,10 @@ import type {
   Comment,
   Event,
   EventFilters,
+  EventPaginationFilters,
   GammaMarket,
   MarketFilters,
+  PaginatedResponse,
   PaginationParams,
   SearchParams,
   SearchResults,
@@ -225,6 +227,15 @@ export class PolymarketGammaClient {
    */
   async getEventTags(eventId: string): Promise<Tag[]> {
     return this.request<Tag[]>(`/events/${eventId}/tags`);
+  }
+
+  /**
+   * Get events with pagination metadata
+   * @param filters - Filter and pagination parameters
+   * @returns Paginated response with events and metadata
+   */
+  async getEventsPaginated(filters?: EventPaginationFilters): Promise<PaginatedResponse<Event>> {
+    return this.request<PaginatedResponse<Event>>('/events/pagination', filters);
   }
 
   // ==================== Tag Methods ====================

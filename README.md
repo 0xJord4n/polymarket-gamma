@@ -7,7 +7,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/0xjord4n/polymarket-gamma.svg)](https://github.com/0xjord4n/polymarket-gamma/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/0xjord4n/polymarket-gamma.svg)](https://github.com/0xjord4n/polymarket-gamma/issues)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/polymarket-gamma)](https://bundlephobia.com/package/polymarket-gamma)
-[![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen.svg)](https://github.com/0xjord4n/polymarket-gamma)
+[![Tests](https://img.shields.io/badge/tests-35%20passing-brightgreen.svg)](https://github.com/0xjord4n/polymarket-gamma)
 
 A clean, type-safe TypeScript client for the Polymarket Gamma API. Access prediction markets, events, tags, and related data with full TypeScript support.
 
@@ -17,7 +17,7 @@ A clean, type-safe TypeScript client for the Polymarket Gamma API. Access predic
 - 🚀 **Simple API** - Intuitive methods for accessing all Gamma API endpoints
 - 📦 **Zero Config** - Works out of the box with sensible defaults
 - 🔄 **Modern** - Built with modern JavaScript features (ESM, async/await)
-- 🧪 **Well-Tested** - Comprehensive test suite with 33 passing tests
+- 🧪 **Well-Tested** - Comprehensive test suite with 35 passing tests
 - 🎨 **Clean Code** - Linted with BiomeJS for consistent code quality
 - ✨ **Auto-Parsing** - Automatically parses JSON string fields (outcomes, prices, token IDs)
 
@@ -109,6 +109,20 @@ const events = await client.getEvents({
   limit: 10,
   offset: 0,
 });
+
+// Get events with pagination metadata
+const paginatedEvents = await client.getEventsPaginated({
+  active: true,
+  archived: false,
+  closed: false,
+  order: 'startDate',
+  ascending: false,
+  limit: 10,
+  offset: 0,
+});
+console.log(paginatedEvents.data); // Array of events
+console.log(paginatedEvents.pagination.hasMore); // true/false
+console.log(paginatedEvents.pagination.totalResults); // Total count
 
 // Get tags for an event
 const tags = await client.getEventTags('event-id');
@@ -251,7 +265,7 @@ This package includes comprehensive unit tests using Vitest. Tests cover:
 - ✅ URL construction and query parameters
 - ✅ Automatic parsing of JSON string fields
 
-**Test Coverage:** 33 tests, all passing
+**Test Coverage:** 35 tests, all passing
 
 Run tests with:
 ```bash

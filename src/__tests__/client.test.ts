@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PolymarketGammaClient } from '../client';
-import type { Event, GammaMarket, SearchResults, Tag } from '../types';
+import type { Event, GammaMarket, PaginatedResponse, SearchResults, Tag } from '../types';
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -239,6 +239,68 @@ describe('PolymarketGammaClient', () => {
       expect(callUrl).toContain('active=true');
       expect(callUrl).toContain('limit=5');
       expect(callUrl).toContain('tags=crypto');
+    });
+  });
+
+  describe('getEventsPaginated', () => {
+    it('should get events with pagination metadata', async () => {
+      const mockResponse: PaginatedResponse<Event> = {
+        data: [
+          { id: '1', title: 'Event 1' },
+          { id: '2', title: 'Event 2' },
+        ],
+        pagination: {
+          hasMore: true,
+          totalResults: 100,
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await client.getEventsPaginated({
+        active: true,
+        limit: 2,
+        offset: 0,
+        order: 'startDate',
+        ascending: false,
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/events/pagination'),
+        expect.any(Object),
+      );
+      expect(result.data).toHaveLength(2);
+      expect(result.pagination.hasMore).toBe(true);
+      expect(result.pagination.totalResults).toBe(100);
+    });
+
+    it('should handle pagination parameters correctly', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], pagination: { hasMore: false, totalResults: 0 } }),
+      });
+
+      await client.getEventsPaginated({
+        active: true,
+        archived: false,
+        closed: false,
+        order: 'startDate',
+        ascending: false,
+        limit: 10,
+        offset: 20,
+      });
+
+      const callUrl = mockFetch.mock.calls[0][0];
+      expect(callUrl).toContain('active=true');
+      expect(callUrl).toContain('archived=false');
+      expect(callUrl).toContain('closed=false');
+      expect(callUrl).toContain('order=startDate');
+      expect(callUrl).toContain('ascending=false');
+      expect(callUrl).toContain('limit=10');
+      expect(callUrl).toContain('offset=20');
     });
   });
 

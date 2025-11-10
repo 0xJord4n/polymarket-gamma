@@ -330,3 +330,30 @@ export interface SearchParams {
   offset?: number;
   [key: string]: unknown;
 }
+
+/**
+ * Pagination metadata
+ */
+export interface PaginationMetadata {
+  hasMore: boolean;
+  totalResults: number;
+}
+
+/**
+ * Paginated response wrapper
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMetadata;
+}
+
+/**
+ * Pagination filter parameters for events
+ */
+export interface EventPaginationFilters extends PaginationParams {
+  active?: boolean;
+  closed?: boolean;
+  archived?: boolean;
+  order?: 'startDate' | 'endDate' | 'liquidity' | 'volume';
+  ascending?: boolean;
+}
