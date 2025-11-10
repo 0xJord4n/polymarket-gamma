@@ -302,7 +302,7 @@ export interface MarketFilters extends PaginationParams {
   tags?: string[];
   category?: string;
   event_id?: string;
-  order_by?: 'liquidity' | 'volume' | 'created_at' | 'end_date';
+  order_by?: string; // Common values: 'liquidity', 'volume', 'created_at', 'end_date'
   ascending?: boolean;
 }
 
@@ -317,7 +317,7 @@ export interface EventFilters extends PaginationParams {
   tags?: string[];
   category?: string;
   series_id?: string;
-  order_by?: 'liquidity' | 'volume' | 'created_at' | 'end_date';
+  order_by?: string; // Common values: 'liquidity', 'volume', 'created_at', 'end_date'
   ascending?: boolean;
 }
 
@@ -354,6 +354,6 @@ export interface EventPaginationFilters extends PaginationParams {
   active?: boolean;
   closed?: boolean;
   archived?: boolean;
-  order?: 'startDate' | 'endDate' | 'liquidity' | 'volume';
+  order?: string; // Common values: 'startDate', 'endDate', 'liquidity', 'volume'
   ascending?: boolean;
 }

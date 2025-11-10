@@ -115,7 +115,7 @@ const markets = await client.getMarkets({
   category: 'politics',
   limit: 20,
   offset: 0,
-  order_by: 'volume', // 'liquidity' | 'volume' | 'created_at' | 'end_date'
+  order_by: 'volume', // Common: 'liquidity', 'volume', 'created_at', 'end_date' (accepts any string)
   ascending: false,
 });
 
