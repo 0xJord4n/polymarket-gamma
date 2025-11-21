@@ -39,6 +39,7 @@ export class PolymarketGammaClient {
   private readonly timeout: number;
   private readonly fetchFn: typeof fetch;
   private readonly customHeaders: Record<string, string>;
+  private readonly requestCache = new Map<string, Promise<unknown>>();
 
   /**
    * Creates a new Polymarket Gamma API client
@@ -103,9 +104,39 @@ export class PolymarketGammaClient {
   }
 
   /**
-   * Internal method to make HTTP requests
+   * Internal method to make HTTP requests with deduplication
    */
   private async request<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
+    // Create cache key from endpoint and params
+    const cacheKey = params
+      ? `${endpoint}?${new URLSearchParams(params as Record<string, string>).toString()}`
+      : endpoint;
+
+    // Return existing promise if request is in-flight
+    if (this.requestCache.has(cacheKey)) {
+      return this.requestCache.get(cacheKey) as Promise<T>;
+    }
+
+    // Create new request promise
+    const promise = this.doRequest<T>(endpoint, params);
+    this.requestCache.set(cacheKey, promise);
+
+    // Clean up cache after request completes (success or failure)
+    promise
+      .then(() => {
+        setTimeout(() => this.requestCache.delete(cacheKey), 100);
+      })
+      .catch(() => {
+        setTimeout(() => this.requestCache.delete(cacheKey), 100);
+      });
+
+    return promise;
+  }
+
+  /**
+   * Perform the actual HTTP request
+   */
+  private async doRequest<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
     const url = new URL(endpoint, this.baseUrl);
 
     // Add query parameters
