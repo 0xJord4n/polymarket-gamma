@@ -93,6 +93,16 @@ export class PolymarketGammaClient {
   }
 
   /**
+   * Validate API response to ensure it's a valid object
+   */
+  private validateResponse<T>(data: unknown, endpoint: string): T {
+    if (!data || typeof data !== 'object') {
+      throw new Error(`Invalid response from ${endpoint}: expected object, got ${typeof data}`);
+    }
+    return data as T;
+  }
+
+  /**
    * Internal method to make HTTP requests
    */
   private async request<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
@@ -131,7 +141,8 @@ export class PolymarketGammaClient {
       }
 
       const data = await response.json();
-      return this.parseJsonFields(data) as T;
+      const validated = this.validateResponse<T>(data, endpoint);
+      return this.parseJsonFields(validated) as T;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -159,7 +170,8 @@ export class PolymarketGammaClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return (await response.json()) as T;
+      const data = await response.json();
+      return this.validateResponse<T>(data, url);
     } finally {
       clearTimeout(timeoutId);
     }

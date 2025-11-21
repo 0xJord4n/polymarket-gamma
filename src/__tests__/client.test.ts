@@ -573,6 +573,39 @@ describe('PolymarketGammaClient', () => {
 
       await expect(client.getMarkets()).rejects.toThrow('Network error');
     });
+
+    it('should handle invalid response (non-object)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got object',
+      );
+    });
+
+    it('should handle invalid response (primitive string)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => 'invalid string response',
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got string',
+      );
+    });
+
+    it('should handle invalid response (number)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => 123,
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got number',
+      );
+    });
   });
 
   describe('request handling', () => {
