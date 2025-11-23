@@ -28,6 +28,7 @@ export interface GammaClientConfig {
   timeout?: number;
   fetch?: typeof fetch;
   headers?: Record<string, string>;
+  enableCache?: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export class PolymarketGammaClient {
   private readonly timeout: number;
   private readonly fetchFn: typeof fetch;
   private readonly customHeaders: Record<string, string>;
+  private readonly enableCache: boolean;
   private readonly requestCache = new Map<string, Promise<unknown>>();
 
   /**
@@ -50,6 +52,7 @@ export class PolymarketGammaClient {
     this.timeout = config.timeout ?? 30000;
     this.fetchFn = config.fetch ?? globalThis.fetch;
     this.customHeaders = config.headers ?? {};
+    this.enableCache = config.enableCache ?? true;
   }
 
   /**
@@ -97,8 +100,10 @@ export class PolymarketGammaClient {
    * Validate API response to ensure it's a valid object
    */
   private validateResponse<T>(data: unknown, endpoint: string): T {
-    if (!data || typeof data !== 'object') {
-      throw new Error(`Invalid response from ${endpoint}: expected object, got ${typeof data}`);
+    if (data === null || typeof data !== 'object') {
+      throw new Error(
+        `Invalid response from ${endpoint}: expected object, got ${data === null ? 'null' : typeof data}`,
+      );
     }
     return data as T;
   }
@@ -107,10 +112,30 @@ export class PolymarketGammaClient {
    * Internal method to make HTTP requests with deduplication
    */
   private async request<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
-    // Create cache key from endpoint and params
-    const cacheKey = params
-      ? `${endpoint}?${new URLSearchParams(params as Record<string, string>).toString()}`
-      : endpoint;
+    // If caching is disabled, skip deduplication
+    if (!this.enableCache) {
+      return this.doRequest<T>(endpoint, params);
+    }
+
+    // Create cache key from endpoint and params (matching doRequest logic)
+    let cacheKey: string;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            for (const item of value) {
+              searchParams.append(key, String(item));
+            }
+          } else {
+            searchParams.append(key, String(value));
+          }
+        }
+      }
+      cacheKey = `${endpoint}?${searchParams.toString()}`;
+    } else {
+      cacheKey = endpoint;
+    }
 
     // Return existing promise if request is in-flight
     if (this.requestCache.has(cacheKey)) {
@@ -122,13 +147,9 @@ export class PolymarketGammaClient {
     this.requestCache.set(cacheKey, promise);
 
     // Clean up cache after request completes (success or failure)
-    promise
-      .then(() => {
-        setTimeout(() => this.requestCache.delete(cacheKey), 100);
-      })
-      .catch(() => {
-        setTimeout(() => this.requestCache.delete(cacheKey), 100);
-      });
+    promise.finally(() => {
+      setTimeout(() => this.requestCache.delete(cacheKey), 100);
+    });
 
     return promise;
   }

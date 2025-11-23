@@ -68,6 +68,30 @@ describe('PolymarketGammaClient', () => {
         }),
       );
     });
+
+    it('should allow disabling cache via config', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1' }],
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '2' }],
+      });
+
+      const noCacheClient = new PolymarketGammaClient({
+        enableCache: false,
+      });
+
+      // Make two identical concurrent requests with cache disabled
+      await Promise.all([
+        noCacheClient.getMarkets({ limit: 5 }),
+        noCacheClient.getMarkets({ limit: 5 }),
+      ]);
+
+      // Should call fetch twice since cache is disabled
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('search', () => {
@@ -581,7 +605,7 @@ describe('PolymarketGammaClient', () => {
       });
 
       await expect(client.getMarkets()).rejects.toThrow(
-        'Invalid response from /markets: expected object, got object',
+        'Invalid response from /markets: expected object, got null',
       );
     });
 
