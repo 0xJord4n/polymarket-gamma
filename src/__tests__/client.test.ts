@@ -68,6 +68,30 @@ describe('PolymarketGammaClient', () => {
         }),
       );
     });
+
+    it('should allow disabling cache via config', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1' }],
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '2' }],
+      });
+
+      const noCacheClient = new PolymarketGammaClient({
+        enableCache: false,
+      });
+
+      // Make two identical concurrent requests with cache disabled
+      await Promise.all([
+        noCacheClient.getMarkets({ limit: 5 }),
+        noCacheClient.getMarkets({ limit: 5 }),
+      ]);
+
+      // Should call fetch twice since cache is disabled
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('search', () => {
@@ -573,6 +597,39 @@ describe('PolymarketGammaClient', () => {
 
       await expect(client.getMarkets()).rejects.toThrow('Network error');
     });
+
+    it('should handle invalid response (non-object)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got null',
+      );
+    });
+
+    it('should handle invalid response (primitive string)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => 'invalid string response',
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got string',
+      );
+    });
+
+    it('should handle invalid response (number)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => 123,
+      });
+
+      await expect(client.getMarkets()).rejects.toThrow(
+        'Invalid response from /markets: expected object, got number',
+      );
+    });
   });
 
   describe('request handling', () => {
@@ -692,6 +749,83 @@ describe('PolymarketGammaClient', () => {
       expect(callUrl).toContain('limit=10');
       expect(callUrl).not.toContain('offset');
       expect(callUrl).not.toContain('active');
+    });
+  });
+
+  describe('request deduplication', () => {
+    it('should deduplicate concurrent identical requests', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1', question: 'Test' }],
+      });
+
+      // Make two concurrent identical requests
+      const [result1, result2] = await Promise.all([
+        client.getMarkets({ limit: 5 }),
+        client.getMarkets({ limit: 5 }),
+      ]);
+
+      // Should only call fetch once
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      // Both results should be the same
+      expect(result1).toEqual(result2);
+    });
+
+    it('should not deduplicate requests with different parameters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1' }],
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '2' }],
+      });
+
+      // Make two concurrent requests with different params
+      await Promise.all([client.getMarkets({ limit: 5 }), client.getMarkets({ limit: 10 })]);
+
+      // Should call fetch twice
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should clear cache after request completes', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1' }],
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '2' }],
+      });
+
+      // First request
+      await client.getMarkets({ limit: 5 });
+
+      // Wait for cache cleanup (100ms + small buffer)
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Second identical request should not be deduplicated
+      await client.getMarkets({ limit: 5 });
+
+      // Should call fetch twice
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle concurrent requests to different endpoints', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '1' }],
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: '2' }],
+      });
+
+      // Make concurrent requests to different endpoints
+      await Promise.all([client.getMarkets({ limit: 5 }), client.getTags({ limit: 5 })]);
+
+      // Should call fetch twice (different endpoints)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -28,6 +28,7 @@ export interface GammaClientConfig {
   timeout?: number;
   fetch?: typeof fetch;
   headers?: Record<string, string>;
+  enableCache?: boolean;
 }
 
 /**
@@ -39,6 +40,8 @@ export class PolymarketGammaClient {
   private readonly timeout: number;
   private readonly fetchFn: typeof fetch;
   private readonly customHeaders: Record<string, string>;
+  private readonly enableCache: boolean;
+  private readonly requestCache = new Map<string, Promise<unknown>>();
 
   /**
    * Creates a new Polymarket Gamma API client
@@ -49,6 +52,7 @@ export class PolymarketGammaClient {
     this.timeout = config.timeout ?? 30000;
     this.fetchFn = config.fetch ?? globalThis.fetch;
     this.customHeaders = config.headers ?? {};
+    this.enableCache = config.enableCache ?? true;
   }
 
   /**
@@ -93,9 +97,67 @@ export class PolymarketGammaClient {
   }
 
   /**
-   * Internal method to make HTTP requests
+   * Validate API response to ensure it's a valid object
+   */
+  private validateResponse<T>(data: unknown, endpoint: string): T {
+    if (data === null || typeof data !== 'object') {
+      throw new Error(
+        `Invalid response from ${endpoint}: expected object, got ${data === null ? 'null' : typeof data}`,
+      );
+    }
+    return data as T;
+  }
+
+  /**
+   * Internal method to make HTTP requests with deduplication
    */
   private async request<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
+    // If caching is disabled, skip deduplication
+    if (!this.enableCache) {
+      return this.doRequest<T>(endpoint, params);
+    }
+
+    // Create cache key from endpoint and params (matching doRequest logic)
+    let cacheKey: string;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            for (const item of value) {
+              searchParams.append(key, String(item));
+            }
+          } else {
+            searchParams.append(key, String(value));
+          }
+        }
+      }
+      cacheKey = `${endpoint}?${searchParams.toString()}`;
+    } else {
+      cacheKey = endpoint;
+    }
+
+    // Return existing promise if request is in-flight
+    if (this.requestCache.has(cacheKey)) {
+      return this.requestCache.get(cacheKey) as Promise<T>;
+    }
+
+    // Create new request promise
+    const promise = this.doRequest<T>(endpoint, params);
+    this.requestCache.set(cacheKey, promise);
+
+    // Clean up cache after request completes (success or failure)
+    promise.finally(() => {
+      setTimeout(() => this.requestCache.delete(cacheKey), 100);
+    });
+
+    return promise;
+  }
+
+  /**
+   * Perform the actual HTTP request
+   */
+  private async doRequest<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
     const url = new URL(endpoint, this.baseUrl);
 
     // Add query parameters
@@ -131,7 +193,8 @@ export class PolymarketGammaClient {
       }
 
       const data = await response.json();
-      return this.parseJsonFields(data) as T;
+      const validated = this.validateResponse<T>(data, endpoint);
+      return this.parseJsonFields(validated) as T;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -159,7 +222,8 @@ export class PolymarketGammaClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return (await response.json()) as T;
+      const data = await response.json();
+      return this.validateResponse<T>(data, url);
     } finally {
       clearTimeout(timeoutId);
     }
