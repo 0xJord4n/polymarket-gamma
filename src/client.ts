@@ -247,9 +247,9 @@ export class PolymarketGammaClient {
    * @param idOrSlug - Market ID or slug
    * @returns Market details
    */
-  async getMarket(idOrSlug: string): Promise<GammaMarket> {
-    // Check if it's a slug (contains hyphens) or ID
-    const endpoint = idOrSlug.includes('-') ? `/markets/slug/${idOrSlug}` : `/markets/${idOrSlug}`;
+  async getMarket(idOrSlug: number | string): Promise<GammaMarket> {
+    const isSlug = typeof idOrSlug === 'string';
+    const endpoint = isSlug ? `/markets/slug/${idOrSlug}` : `/markets/${idOrSlug}`;
     return this.request<GammaMarket>(endpoint);
   }
 
@@ -278,8 +278,9 @@ export class PolymarketGammaClient {
    * @param idOrSlug - Event ID or slug
    * @returns Event details
    */
-  async getEvent(idOrSlug: string): Promise<Event> {
-    const endpoint = idOrSlug.includes('-') ? `/events/slug/${idOrSlug}` : `/events/${idOrSlug}`;
+  async getEvent(idOrSlug: number | string): Promise<Event> {
+    const isSlug = typeof idOrSlug === 'string';
+    const endpoint = isSlug ? `/events/slug/${idOrSlug}` : `/events/${idOrSlug}`;
     return this.request<Event>(endpoint);
   }
 
@@ -326,8 +327,10 @@ export class PolymarketGammaClient {
    * @param idOrSlug - Tag ID or slug
    * @returns Tag details
    */
-  async getTag(idOrSlug: string): Promise<Tag> {
-    return this.request<Tag>(`/tags/${idOrSlug}`);
+  async getTag(idOrSlug: number | string): Promise<Tag> {
+    const isSlug = typeof idOrSlug === 'string';
+    const endpoint = isSlug ? `/tags/slug/${idOrSlug}` : `/tags/${idOrSlug}`;
+    return this.request<Tag>(endpoint);
   }
 
   /**
@@ -335,8 +338,9 @@ export class PolymarketGammaClient {
    * @param idOrSlug - Tag ID or slug
    * @returns Array of related tags
    */
-  async getRelatedTags(idOrSlug: string): Promise<Tag[]> {
-    const endpoint = idOrSlug.includes('-')
+  async getRelatedTags(idOrSlug: number | string): Promise<Tag[]> {
+    const isSlug = typeof idOrSlug === 'string';
+    const endpoint = isSlug
       ? `/tags/slug/${idOrSlug}/related-tags`
       : `/tags/${idOrSlug}/related-tags`;
     return this.request<Tag[]>(endpoint);
@@ -347,8 +351,9 @@ export class PolymarketGammaClient {
    * @param idOrSlug - Tag ID or slug
    * @returns Array of tags
    */
-  async getRelatedTagsTags(idOrSlug: string): Promise<Tag[]> {
-    const endpoint = idOrSlug.includes('-')
+  async getRelatedTagsTags(idOrSlug: number | string): Promise<Tag[]> {
+    const isSlug = typeof idOrSlug === 'string';
+    const endpoint = isSlug
       ? `/tags/slug/${idOrSlug}/related-tags/tags`
       : `/tags/${idOrSlug}/related-tags/tags`;
     return this.request<Tag[]>(endpoint);
